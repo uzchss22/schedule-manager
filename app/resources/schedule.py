@@ -3,6 +3,7 @@ from flask_restful import Api, Resource
 from app import db
 from app.models import Schedule
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from datetime import datetime
 import logging
 
 bp = Blueprint('schedule', __name__)
@@ -13,7 +14,6 @@ class ScheduleResource(Resource):
     def get(self):
         try:
             user_id = get_jwt_identity()
-            logging.info(f"User ID from JWT: {user_id}")
             schedules = Schedule.query.filter_by(user_id=user_id).all()
             return [{
                 "id": schedule.id,
@@ -30,11 +30,15 @@ class ScheduleResource(Resource):
         try:
             data = request.get_json()
             user_id = get_jwt_identity()
-            logging.info(f"User ID from JWT: {user_id}")
+
+            # Convert date string to datetime object
+            date_str = data['date']
+            date_obj = datetime.fromisoformat(date_str)
+
             new_schedule = Schedule(
                 title=data['title'],
                 description=data.get('description'),
-                date=data['date'],
+                date=date_obj,
                 user_id=user_id
             )
             db.session.add(new_schedule)
